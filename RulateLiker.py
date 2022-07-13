@@ -5,9 +5,11 @@ from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 
+import rulate_config
+
 
 class RulateLiker:
-    def __init__(self, login, password, book, webdriver_url, headless=True):
+    def __init__(self, login, password, book, webdriver_url, headless=True, actions={}):
         # Sets account data and book's url
         self.__login = login
         self.__password = password
@@ -38,16 +40,63 @@ class RulateLiker:
             print(ex)
             self.close_driver()
 
-        self.age_submit()  # Age submission
-        self.like_book()  # Likes the page
-        self.get_first_chapter()  # Goes to the first accessed chapter
-        self.old_reader()  # Old reader on
-        print("Starting liking chapters...")
-        self.like_chapters()  # Like all chapters
+        self.manage_routine(like=actions.get('like'),
+                            thx=actions.get('thx'),
+                            thx_amount=actions.get('thx_amount'),
+                            stars=actions.get('stars'),
+                            stars_value=actions.get('stars_value'))
 
-    def like_chapters(self):
+    def manage_routine(self, like=True, thx=True, thx_amount=999999, stars=False, stars_value=5):
+        self.age_submit()  # Age submission
+        if stars:
+            self.put_stars(value=stars_value)
+        if like:
+            self.like_book()  # Likes the page
+        if thx:
+            self.thx_chapters(amount=thx_amount)
+
+    def put_stars(self, value):
+        stars = list(self._driver.find_elements(By.CLASS_NAME, 'star'))
+        if value == 1:
+            try:
+                stars[0].click()
+                stars[5].click()
+                stars[10].click()
+            except Exception:
+                pass
+        elif value == 2:
+            try:
+                stars[1].click()
+                stars[6].click()
+                stars[11].click()
+            except Exception:
+                pass
+        elif value == 3:
+            try:
+                stars[2].click()
+                stars[7].click()
+                stars[12].click()
+            except Exception:
+                pass
+        elif value == 4:
+            try:
+                stars[3].click()
+                stars[8].click()
+                stars[13].click()
+            except Exception:
+                pass
+        elif value == 5:
+            try:
+                stars[4].click()
+                stars[9].click()
+                stars[14].click()
+            except Exception:
+                pass
+        print('Stars - Done!')
+
+    def like_chapters(self, amount=999999):
         try:
-            while True:
+            while self.__liked_chapters <= amount:
                 if self.is_class_exists('like_btn'):
                     self._driver.find_element(By.CLASS_NAME, 'like_btn').click()
                     self.__liked_chapters += 1
@@ -57,6 +106,12 @@ class RulateLiker:
                     raise Exception
         except Exception as e:
             print("All accessible chapters were liked")
+
+    def thx_chapters(self, amount=0):
+        self.get_first_chapter()  # Goes to the first accessed chapter
+        self.old_reader()  # Old reader on
+        print("Starting liking chapters...")
+        self.like_chapters()  # Like all chapters
 
     def old_reader(self):
         self._driver.find_element(By.CLASS_NAME, 'icon-cog').click()
@@ -139,9 +194,8 @@ class RulateLiker:
                 print('Already liked the page')
             else:
                 self._driver.find_element(By.CLASS_NAME, 'like-btn').click()
-        except Exception as ex:
-            print(ex)
-            self.close_driver()
+        except Exception:
+            print("Can't like the book...Skipping...")
 
     def age_submit(self):
         try:
